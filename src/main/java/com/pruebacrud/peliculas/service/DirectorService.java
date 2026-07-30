@@ -22,7 +22,7 @@ public class DirectorService {
     public Director obtenerPorId (Long id) {
         Director director = directorRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("El director con ID " + id + " no existe."));
 
-        if(!director.isActivo()) {
+        if(!director.getActivo()) {
             throw new RecursoNoEncontradoException("El director con ID " + id + " ha sido dada de baja.");
         }
 

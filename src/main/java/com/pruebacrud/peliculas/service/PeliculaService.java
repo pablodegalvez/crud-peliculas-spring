@@ -23,7 +23,7 @@ public class PeliculaService {
     public Pelicula obtenerPorId (Long id) {
         Pelicula pelicula = peliculaRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("La pelicula con ID " + id + " no existe."));
 
-        if (!pelicula.isActivo()) {
+        if (!pelicula.getActivo()) {
             throw new RecursoNoEncontradoException("La pelicula con ID " + id + " ha sido dada de baja.");
         }
 

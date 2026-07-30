@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name = "directores")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Director {
 
     @Id
@@ -27,7 +28,7 @@ public class Director {
     private String nacionalidad;
 
     @Column(name = "activo", nullable = false, columnDefinition = "boolean default true")
-    private boolean activo = true;
+    private Boolean activo = true;
 
     @OneToMany(mappedBy = "director", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("director")

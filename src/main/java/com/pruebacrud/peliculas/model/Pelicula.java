@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "peliculas")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Pelicula {
 
     @Id
@@ -28,7 +29,7 @@ public class Pelicula {
     private Integer duracion;
 
     @Column(name = "activo", nullable = false, columnDefinition = "boolean default true")
-    private boolean activo = true;
+    private Boolean activo = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "director_id", nullable = true)
