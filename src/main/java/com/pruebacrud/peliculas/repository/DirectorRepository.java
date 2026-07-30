@@ -11,7 +11,9 @@ import java.util.List;
 @Repository
 public interface DirectorRepository extends JpaRepository<Director, Long> {
 
-    @Query("SELECT d FROM Director d LEFT JOIN FETCH d.peliculaList")
+    @Query("SELECT d FROM Director d LEFT JOIN FETCH d.peliculaList WHERE d.activo = true")
     List<Director> findAllDirectorOptimizado();
+
+    //List<Director> findByActivoTrue();
 
 }

@@ -26,6 +26,9 @@ public class Director {
     @Column(name = "nacionalidad", nullable = false, length = 100)
     private String nacionalidad;
 
+    @Column(name = "activo", nullable = false, columnDefinition = "boolean default true")
+    private boolean activo = true;
+
     @OneToMany(mappedBy = "director", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("director")
     private List<Pelicula> peliculaList;
