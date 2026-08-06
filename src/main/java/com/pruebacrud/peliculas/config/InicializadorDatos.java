@@ -2,8 +2,11 @@ package com.pruebacrud.peliculas.config;
 
 import com.pruebacrud.peliculas.model.Director;
 import com.pruebacrud.peliculas.model.Pelicula;
+import com.pruebacrud.peliculas.model.Rol;
+import com.pruebacrud.peliculas.model.RolNombre;
 import com.pruebacrud.peliculas.repository.DirectorRepository;
 import com.pruebacrud.peliculas.repository.PeliculaRepository;
+import com.pruebacrud.peliculas.repository.RolRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -16,9 +19,25 @@ public class InicializadorDatos implements CommandLineRunner {
 
     private final PeliculaRepository peliculaRepository;
     private final DirectorRepository directorRepository;
+    private final RolRepository rolRepository;
 
     @Override
     public void run(String... args) throws Exception {
+
+
+        // SEMBRADO SEGURO DE ROLES EN POSTGRESQL
+        if (rolRepository.count() == 0) {
+            Rol rolAdmin = new Rol();
+            rolAdmin.setRolNombre(RolNombre.ROLE_ADMIN);
+            rolRepository.save(rolAdmin);
+
+            Rol rolUser = new Rol();
+            rolUser.setRolNombre(RolNombre.ROLE_USER);
+            rolRepository.save(rolUser);
+
+            System.out.println("👉 ¡Roles del sistema inicializados con éxito en PostgreSQL!");
+        }
+
 
         if(peliculaRepository.count()==0 && directorRepository.count()==0) {
             Director nolan = new Director();
