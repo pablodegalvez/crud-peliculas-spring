@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @CrossOrigin // Evita problemas de CORS si conectas un frontend en el futuro
 public class AuthController {

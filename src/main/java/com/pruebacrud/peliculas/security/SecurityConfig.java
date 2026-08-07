@@ -40,6 +40,15 @@ public class SecurityConfig {
                 // 1. Deshabilitar CSRF (No usamos cookies, usamos JWT)
                 .csrf(AbstractHttpConfigurer::disable)
 
+                // 2. NUEVO: Permitir conexiones desde cualquier origen exterior (CORS)
+                .cors(cors -> cors.configurationSource(request -> {
+                    var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+                    corsConfiguration.setAllowedOrigins(java.util.List.of("*")); // Permite cualquier origen (incluyendo file://)
+                    corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
+                    return corsConfiguration;
+                }))
+
                 // 2. Acoplamos nuestro manejador de excepciones personalizado para los 401 Unauthorized
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtEntryPoint))
 
@@ -49,15 +58,15 @@ public class SecurityConfig {
                 // 4. Configurar reglas granulares para Películas y Directores
                 .authorizeHttpRequests(auth -> auth
                         // Permitimos acceso público total al controlador de autenticación (Login y Registro)
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
 
                         // REGLA CRUD: Permitir GETs (Lectura) públicos a películas y directores
-                        .requestMatchers(HttpMethod.GET, "/peliculas/**", "/directores/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/peliculas/**", "/api/directores/**").permitAll()
 
                         // REGLA CRUD: Exigir ROLE_ADMIN para modificar, crear o eliminar datos (POST, PUT, DELETE)
-                        .requestMatchers(HttpMethod.POST, "/peliculas/**", "/directores/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/peliculas/**", "/directores/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/peliculas/**", "/directores/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/peliculas/**", "/api/directores/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/peliculas/**", "/api/directores/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/peliculas/**", "/api/directores/**").hasRole("ADMIN")
 
                         // Cualquier otra ruta no especificada requerirá estar mínimamente autenticado (ROLE_USER o ROLE_ADMIN)
                         .anyRequest().authenticated()
