@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CineAPI - Panel de Control</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #38bdf8;
+            --primary-hover: #0284c7;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .panel-lateral {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+            height: fit-content;
+        }
+
+        .contenido-principal {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 2px solid #334155;
+            padding-bottom: 8px;
+        }
+
+        .grupo-form {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: var(--text);
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: #0f172a;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .estado-token {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #0284c722;
+            border: 1px dashed var(--primary);
+            border-radius: 6px;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .grid-peliculas {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .card-pelicula {
+            background-color: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .card-pelicula h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+        }
+
+        .card-pelicula p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .badge-admin {
+            background-color: #f59e0b;
+            color: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANEL LATERAL: AUTENTICACIÓN -->
+    <div class="panel-lateral">
+        <h2>Autenticación</h2>
+        <div id="seccion-login">
+            <div class="grupo-form">
+                <label>Usuario</label>
+                <input type="text" id="username" value="pablo_admin">
+            </div>
+            <div class="grupo-form">
+                <label>Contraseña</label>
+                <input type="password" id="password" value="secreto12345">
+            </div>
+            <button onclick="ejecutarLogin()">Iniciar Sesión (POST)</button>
+        </div>
+        
+        <div id="info-sesion" style="display: none; margin-top: 20px;">
+            <p>Conectado como: <span id="user-conectado" class="badge-admin"></span></p>
+            <div class="estado-token">
+                <strong>JWT Guardado:</strong><br>
+                <span id="token-guardado"></span>
+            </div>
+            <button onclick="cerrarSesion()" style="background-color: var(--danger); color: white; margin-top: 15px;">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL: CRUD DE PELÍCULAS -->
+    <div class="contenido-principal">
+        <!-- NUEVO FORMULARIO PARA CREAR PELÍCULA -->
+        <div class="panel-lateral" style="width: 100%; box-sizing: border-box; margin-bottom: 20px;">
+            <h2>Añadir Nueva Película (POST Protegido)</h2>
+            <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="grupo-form" style="flex: 2; min-width: 200px; margin-bottom: 0;">
+                    <label>Título de la Película</label>
+                    <input type="text" id="nuevo-titulo" placeholder="Ej: Inception">
+                </div>
+                <div class="grupo-form" style="flex: 1; min-width: 100px; margin-bottom: 0;">
+                    <label>Año de Lanzamiento</label>
+                    <input type="number" id="nuevo-anio" placeholder="2010">
+                </div>
+                <div class="grupo-form" style="flex: 1; min-width: 100px; margin-bottom: 0;">
+                    <label>ID del Director (Opcional)</label>
+                    <input type="number" id="nuevo-director-id" placeholder="Ej: 1">
+                </div>
+                <button onclick="ejecutarCrearPelicula()" style="width: auto; padding: 10px 20px; height: 38px;">Guardar Película</button>
+            </div>
+        </div>
+
+        <div>
+            <h2>Listado de Películas (GET Público)</h2>
+            <!-- BUSCADOR POR ID PÚBLICO -->
+            <div style="background-color: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+                <div class="grupo-form" style="margin-bottom: 0; flex: 1;">
+                    <input type="number" id="buscar-id-input" placeholder="Introduce el ID de una película (ej: 1)">
+                </div>
+                <button onclick="ejecutarBuscarPeliculaPorId()" style="width: auto; padding: 10px 20px;">Buscar por ID (GET)</button>
+                <button onclick="cargarPeliculas()" style="width: auto; padding: 10px 20px; background-color: #334155; color: white;">Ver Todas</button>
+            </div>
+            <button onclick="cargarPeliculas()" style="width: auto; padding: 10px 20px;">Refrescar Catálogo</button>
+        </div>
+        
+        <div class="grid-peliculas" id="contenedor-peliculas">
+            <!-- Las películas se inyectarán aquí con JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:9525/api";
+
+        // Al cargar la página, comprueba si ya había un token y refresca las películas
+        window.onload = () => {
+            comprobarSesion();
+            cargarPeliculas();
+        };
+
+        function comprobarSesion() {
+            const token = localStorage.getItem("jwt_token");
+            const username = localStorage.getItem("jwt_username");
+            
+            if (token && username) {
+                document.getElementById("seccion-login").style.display = "none";
+                document.getElementById("info-sesion").style.display = "block";
+                document.getElementById("user-conectado").innerText = username;
+                document.getElementById("token-guardado").innerText = token.substring(0, 30) + "...";
+            }
+        }
+
+        // ========================================================
+        // FETCH 1: ACCIÓN POST (Login de Usuario)
+        // Asincronía con async/await: Espera la respuesta de la red
+        // ========================================================
+        async function ejecutarLogin() {
+            const userInput = document.getElementById("username").value;
+            const passInput = document.getElementById("password").value;
+
+            // Construimos el molde exacto que espera nuestro LoginUsuario Record de Spring
+            const loginDto = {
+                username: userInput,
+                password: passInput
+            };
+
+            try {
+                // Fetch inicia la petición de red. 'await' detiene la ejecución hasta que el servidor responda.
+                const respuesta = await fetch(`${API_URL}/auth/login`, {
+                    method: "POST", // Especificamos el método HTTP
+                    headers: {
+                        "Content-Type": "application/json" // Le avisamos a Spring que le mandamos un JSON
+                    },
+                    body: JSON.stringify(loginDto) // Convertimos el objeto JS a una cadena de texto JSON
+                });
+
+                // Si la respuesta no es un código 2xx, saltamos al catch
+                if (!respuesta.ok) {
+                    throw new Error("Credenciales incorrectas o fallo en el servidor");
+                }
+
+                // Esperamos a que la respuesta se disecte y convierta en un objeto JS
+                const datos = await respuesta.json(); // Este es nuestro JwtDto de Spring
+
+                // Guardamos el pasaporte (JWT) de forma persistente en el navegador
+                localStorage.setItem("jwt_token", datos.token);
+                localStorage.setItem("jwt_username", datos.username);
+
+                alert("¡Login correcto! Token almacenado en LocalStorage.");
+                comprobarSesion();
+
+            } catch (error) {
+                alert("Error en el login: " + error.message);
+            }
+        }
+
+        // ========================================================
+        // FETCH 2: ACCIÓN GET (Obtener recursos públicos)
+        // No necesita cabeceras de autorización porque es permitAll()
+        // ========================================================
+         async function cargarPeliculas() {
+            const contenedor = document.getElementById("contenedor-peliculas");
+            contenedor.innerHTML = "<p>Cargando catálogo...</p>";
+
+            try {
+                const respuesta = await fetch(`${API_URL}/peliculas`);
+                if (!respuesta.ok) throw new Error("No se pudieron cargar las películas");
+
+                const peliculas = await respuesta.json();
+                contenedor.innerHTML = "";
+
+                if(peliculas.length === 0) {
+                    contenedor.innerHTML = "<p>No hay películas en la base de datos.</p>";
+                    return;
+                }
+
+                peliculas.forEach(pelicula => {
+                    const card = document.createElement("div");
+                    card.className = "card-pelicula";
+                    card.innerHTML = `
+                        <h3>${pelicula.titulo}</h3>
+                        <p><strong>ID:</strong> ${pelicula.id}</p>
+                        <p><strong>Fecha Lanzamiento:</strong> ${pelicula.fechaLanzamiento || 'N/A'}</p>
+                        <p><strong>Director:</strong> ${pelicula.director ? pelicula.director.nombre : 'Anónimo'}</p>
+                        
+                        <!-- BOTONES DE ACCIÓN CRUD -->
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button onclick="ejecutarModificarPelicula(${pelicula.id}, '${pelicula.titulo}', ${pelicula.fechaLanzamiento})" 
+                                    style="background-color: #eab308; color: #0f172a; padding: 6px 12px; font-size: 13px;">
+                                Modificar (PUT)
+                            </button>
+                            <button onclick="ejecutarEliminarPelicula(${pelicula.id})" 
+                                    style="background-color: var(--danger); color: white; padding: 6px 12px; font-size: 13px;">
+                                Eliminar (DELETE)
+                            </button>
+                        </div>
+                    `;
+                    contenedor.appendChild(card);
+                });
+
+            } catch (error) {
+                contenedor.innerHTML = `<p style="color: var(--danger)">Error: ${error.message}</p>`;
+            }
+        }
+
+
+        // ========================================================
+        // FETCH 3: ACCIÓN POST (Crear película)
+        // Necesita de cabecera y de cuerpo
+        // ========================================================
+        async function ejecutarCrearPelicula() {
+            const tituloInput = document.getElementById("nuevo-titulo").value;
+            const anioInput = document.getElementById("nuevo-anio").value;
+            const directorIdInput = document.getElementById("nuevo-director-id").value;
+            const token = localStorage.getItem("jwt_token");
+
+            const peliculaDto = {
+                titulo: tituloInput,
+                fechaLanzamiento: parseInt(anioInput)
+            };
+
+            // Si el usuario introdujo un ID de director, creamos el objeto anidado para Hibernate
+            if (directorIdInput.trim() !== "") {
+                peliculaDto.director = {
+                    id: parseInt(directorIdInput)
+                };
+            } else {
+                peliculaDto.director = null; // Mantiene la nulabilidad segura
+            }
+
+            try {
+                const respuesta = await fetch(`${API_URL}/peliculas`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` // Inyectamos el JWT
+                    },
+                    body: JSON.stringify(peliculaDto)
+                });
+
+                if (respuesta.status === 401 || respuesta.status === 403) {
+                    throw new Error("No tienes autorización. Asegúrate de haber iniciado sesión.");
+                }
+
+                if (!respuesta.ok) throw new Error("No se pudo crear la película");
+
+                alert("¡Película creada en PostgreSQL con éxito!");
+                document.getElementById("nuevo-titulo").value = "";
+                document.getElementById("nuevo-anio").value = "";
+                cargarPeliculas(); // Refrescamos la lista automáticamente
+
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        }
+
+        // ========================================================
+        // FETCH 4: ACCIÓN PUT (Modificar recurso protegido)
+        // Requiere ID en la URL, Content-Type y Authorization JWT
+        // ========================================================
+        async function ejecutarModificarPelicula(id, tituloActual, anioActual, directorActual) {
+            const token = localStorage.getItem("jwt_token");
+
+            // Abrimos ventanas flotantes nativas para pedir los nuevos datos de forma rápida
+            const nuevoTitulo = prompt("Introduce el nuevo título de la película:", tituloActual);
+            if (nuevoTitulo === null) return; // Si cancela, abortamos la función
+            
+            const nuevoAnio = prompt("Introduce el nuevo año de lanzamiento:", anioActual);
+            if (nuevoAnio === null) return;
+
+            const nuevoDirector = prompt("Introduce el nuevo director de la película:", directorActual);
+            if (nuevoDirector === null) return;
+
+            const datosActualizadosDto = {
+                titulo: nuevoTitulo,
+                fechaLanzamiento: nuevoAnio ? parseInt(nuevoAnio) : null,
+                director: {
+                    id: parseInt(nuevoDirector)
+                }
+            };
+
+            try {
+                // El ID viaja concatenado en la URL (Variable de ruta/@PathVariable en Spring)
+                const respuesta = await fetch(`${API_URL}/peliculas/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` // Pasaporte de Administrador
+                    },
+                    body: JSON.stringify(datosActualizadosDto)
+                });
+
+                if (respuesta.status === 401 || respuesta.status === 403) {
+                    throw new Error("No tienes autorización. Inicia sesión como ADMIN.");
+                }
+
+                if (!respuesta.ok) throw new Error("No se pudo actualizar la película.");
+
+                alert("¡Película modificada con éxito en PostgreSQL!");
+                cargarPeliculas(); // Refrescamos la lista
+
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        }
+
+        // ========================================================
+        // FETCH 5: ACCIÓN DELETE (Borrado / Baja lógica protegida)
+        // Requiere ID en la URL y Authorization JWT (SIN BODY)
+        // ========================================================
+        async function ejecutarEliminarPelicula(id) {
+            if (!confirm(`¿Estás seguro de que deseas eliminar la película con ID ${id}?`)) return;
+
+            const token = localStorage.getItem("jwt_token");
+
+            try {
+                // DELETE apunta al recurso por ID y no lleva propiedad 'body'
+                const respuesta = await fetch(`${API_URL}/peliculas/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (respuesta.status === 401 || respuesta.status === 403) {
+                    throw new Error("No tienes autorización. Inicia sesión como ADMIN.");
+                }
+
+                if (!respuesta.ok) throw new Error("No se pudo eliminar la película.");
+
+                alert("¡Película dada de baja con éxito!");
+                cargarPeliculas(); // Refrescamos la lista
+
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        }
+
+         // ========================================================
+        // FETCH 6: ACCIÓN GET POR ID (Buscar un recurso único)
+        // Ruta pública que concatena el identificador en la URL
+        // ========================================================
+        async function ejecutarBuscarPeliculaPorId() {
+            const idInput = document.getElementById("buscar-id-input").value;
+            const contenedor = document.getElementById("contenedor-peliculas");
+
+            if (idInput.trim() === "") {
+                alert("Por favor, introduce un ID válido.");
+                return;
+            }
+
+            contenedor.innerHTML = "<p>Buscando película...</p>";
+
+            try {
+                // El ID viaja incrustado al final del endpoint de la API
+                const respuesta = await fetch(`${API_URL}/peliculas/${idInput}`);
+
+                // Si tu @ControllerAdvice devuelve un 404 (RecursoNoEncontradoException)
+                if (respuesta.status === 404) {
+                    throw new Error(`La película con ID ${idInput} no existe en la base de datos.`);
+                }
+
+                if (!respuesta.ok) throw new Error("Error al consultar el recurso.");
+
+                const pelicula = await respuesta.json(); // Recibimos un único objeto, NO un array
+                contenedor.innerHTML = ""; // Limpiamos el contenedor
+
+                // Dibujamos la tarjeta única de la película encontrada
+                const card = document.createElement("div");
+                card.className = "card-pelicula";
+                card.innerHTML = `
+                    <div style="background-color: #22d3ee22; padding: 2px 8px; border-radius: 4px; display: inline-block; font-size: 11px; margin-bottom: 10px; color: var(--primary); font-weight: bold;">Resultado de Búsqueda</div>
+                    <h3>${pelicula.titulo}</h3>
+                    <p><strong>ID:</strong> ${pelicula.id}</p>
+                    <p><strong>Fecha Lanzamiento:</strong> ${pelicula.fechaLanzamiento || 'N/A'}</p>
+                    <p><strong>Director:</strong> ${pelicula.director ? pelicula.director.nombre : 'Anónimo'}</p>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="ejecutarModificarPelicula(${pelicula.id}, '${pelicula.titulo}', ${pelicula.fechaLanzamiento}, ${pelicula.director ? pelicula.director.id : 'null'})" 
+                                style="background-color: #eab308; color: #0f172a; padding: 6px 12px; font-size: 13px;">
+                            Modificar (PUT)
+                        </button>
+                        <button onclick="ejecutarEliminarPelicula(${pelicula.id})" 
+                                style="background-color: var(--danger); color: white; padding: 6px 12px; font-size: 13px;">
+                            Eliminar (DELETE)
+                        </button>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+                document.getElementById("buscar-id-input").value = ""; // Limpiamos el campo
+
+            } catch (error) {
+                contenedor.innerHTML = `<p style="color: var(--danger)">${error.message}</p>`;
+            }
+        }
+
+
+        function cerrarSesion() {
+            localStorage.clear(); // Borra el token y el usuario
+            location.reload(); // Recarga la página para volver al estado inicial
+        }
+    </script>
+</body>
+</html>
