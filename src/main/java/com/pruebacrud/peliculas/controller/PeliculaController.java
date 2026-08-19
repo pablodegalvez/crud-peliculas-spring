@@ -1,8 +1,12 @@
 package com.pruebacrud.peliculas.controller;
 
 
+import com.pruebacrud.peliculas.dto.PeliculaDto;
+import com.pruebacrud.peliculas.dto.PeliculaResponseDto;
+import com.pruebacrud.peliculas.model.Director;
 import com.pruebacrud.peliculas.model.Pelicula;
 import com.pruebacrud.peliculas.service.PeliculaService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +22,7 @@ public class PeliculaController {
     private final PeliculaService peliculaService;
 
     @GetMapping
-    public List<Pelicula> getAll(@RequestParam(required = false) Integer fecha, @RequestParam(required = false) Integer duracionMax) {
+    public List<PeliculaResponseDto> getAll(@RequestParam(required = false) Integer fecha, @RequestParam(required = false) Integer duracionMax) {
 
         // Si envían el parámetro 'fecha', filtramos por fecha
         if (fecha != null) {
@@ -33,22 +37,23 @@ public class PeliculaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Pelicula> getPelicula(@PathVariable Long id) {
-        return ResponseEntity.ok(peliculaService.obtenerPorId(id));
+    public ResponseEntity<PeliculaResponseDto> getPelicula(@PathVariable Long id) {
+        return ResponseEntity.ok(peliculaService.obtenerPorIdDto(id));
     }
 
     @PostMapping
-    public ResponseEntity<Pelicula> addPelicula (@RequestBody Pelicula nuevaPelicula) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(peliculaService.guardarPelicula(nuevaPelicula));
+    public ResponseEntity<PeliculaResponseDto> addPelicula (@Valid @RequestBody PeliculaDto nuevaPeliculaDto) {
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(peliculaService.guardarPelicula(nuevaPeliculaDto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Pelicula> updatePelicula (@PathVariable Long id, @RequestBody Pelicula peliculaActualizada) {
+    public ResponseEntity<PeliculaResponseDto> updatePelicula (@PathVariable Long id, @RequestBody PeliculaDto peliculaActualizada) {
         return ResponseEntity.ok(peliculaService.actualizarPelicula(id, peliculaActualizada));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Pelicula> deletePelicula (@PathVariable Long id) {
+    public ResponseEntity<PeliculaResponseDto> deletePelicula (@PathVariable Long id) {
         return ResponseEntity.ok(peliculaService.eliminarPelicula(id));
     }
 

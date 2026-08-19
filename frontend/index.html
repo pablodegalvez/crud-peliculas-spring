@@ -295,7 +295,7 @@
                         
                         <!-- BOTONES DE ACCIÓN CRUD -->
                         <div style="display: flex; gap: 10px; margin-top: 15px;">
-                            <button onclick="ejecutarModificarPelicula(${pelicula.id}, '${pelicula.titulo}', ${pelicula.fechaLanzamiento})" 
+                            <button onclick="ejecutarModificarPelicula(${pelicula.id}, '${pelicula.titulo}', ${pelicula.fechaLanzamiento}, ${pelicula.duracion})"
                                     style="background-color: #eab308; color: #0f172a; padding: 6px 12px; font-size: 13px;">
                                 Modificar (PUT)
                             </button>
@@ -368,7 +368,7 @@
         // FETCH 4: ACCIÓN PUT (Modificar recurso protegido)
         // Requiere ID en la URL, Content-Type y Authorization JWT
         // ========================================================
-        async function ejecutarModificarPelicula(id, tituloActual, anioActual, directorActual) {
+        async function ejecutarModificarPelicula(id, tituloActual, anioActual, duracion, directorActual) {
             const token = localStorage.getItem("jwt_token");
 
             // Abrimos ventanas flotantes nativas para pedir los nuevos datos de forma rápida
@@ -378,15 +378,17 @@
             const nuevoAnio = prompt("Introduce el nuevo año de lanzamiento:", anioActual);
             if (nuevoAnio === null) return;
 
+            const nuevaDuracion = prompt("Introduce la nueva duracion de la pelicula:", duracion);
+            if (nuevaDuracion === null) return;
+
             const nuevoDirector = prompt("Introduce el nuevo director de la película:", directorActual);
             if (nuevoDirector === null) return;
 
             const datosActualizadosDto = {
                 titulo: nuevoTitulo,
+                idDirector: parseInt(nuevoDirector),
                 fechaLanzamiento: nuevoAnio ? parseInt(nuevoAnio) : null,
-                director: {
-                    id: parseInt(nuevoDirector)
-                }
+                duracion: nuevaDuracion
             };
 
             try {
