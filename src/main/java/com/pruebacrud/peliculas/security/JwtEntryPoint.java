@@ -25,5 +25,18 @@ public class JwtEntryPoint implements AuthenticationEntryPoint {
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // HTTP 401
         response.getWriter().write("{\"status\": 401, \"error\": \"No autorizado\", \"mensaje\": \"" + authException.getMessage() + "\"}");
+
+        /*
+        Otra forma de hacerlo sería con ObjectMapper
+        Es necesario inyectar ObjectMapper con @RequiredArgsConstructor y con private final ObjectMapper objectMapper;
+
+        // Estructura segura usando un mapa que Jackson convertirá a JSON perfectamente
+        Map<String, Object> errorDetalles = new HashMap<>();
+        errorDetalles.put("status", HttpServletResponse.SC_UNAUTHORIZED);
+        errorDetalles.put("error", "No autorizado");
+        errorDetalles.put("mensaje", authException.getMessage());
+
+        objectMapper.writeValue(response.getWriter(), errorDetalles);
+         */
     }
 }

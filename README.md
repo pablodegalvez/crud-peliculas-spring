@@ -11,7 +11,7 @@ Este proyecto consiste en una API RESTful para la gestión de películas y direc
 *   **Seguridad:** Spring Security & JJWT (Json Web Token v0.12.6)
 *   **Persistencia:** Spring Data JPA / Hibernate
 *   **Base de Datos:** PostgreSQL
-*   **Productividad:** Lombok & Spring Boot DevTools
+*   **Productividad:** Lombok, MapStruct & Spring Boot DevTools
 *   **Validación:** Jakarta Validation Starter
 
 ### Frontend (Vanilla Client)
@@ -54,14 +54,17 @@ El proyecto implementa un diseño limpio monorrepositorio para facilitar el desp
 
 ```text
 ├── src/main/java/              # Código fuente de Spring Boot
+│   ├── config/                 # Inyección de Datos Automatizado (CommandLineRunner)
 │   ├── controller/             # Controladores REST CRUD
+│   ├── dto/                    # Patrón DTO para evitar enviar @Entity con validaciones
+│   ├── exception/              # Herramienta centralizada para capturar excepciones
+│   ├── mapper/                 # MapStruct automatiza la transferencia de propiedades hacia objetos inmutables
 │   ├── model/                  # Entidades de Hibernate (Pelicula, Director, Usuario, Rol)
 │   ├── repository/             # Interfaces de Spring Data JPA
 │   ├── security/               # El núcleo defensivo (Filtros, Configuración, Proveedores JWT)
-│   └── util/                   # Sembrado idempotente de datos (CommandLineRunner)
+│   └── service/                # Capa de negocio que contiene algoritmos y se conecta con el repositorio
 ├── frontend/                   # Interfaz de Usuario Desacoplada
 │   ├── index.html              # Panel visual con acciones Fetch (GET, POST, PUT, DELETE)
-│   └── fetch.html              # Enciclopedia técnica personal sobre asincronía y promesas
 ├── pom.xml                     # Gestión de dependencias de Maven
 └── README.md                   # Documentación del sistema
 ```
