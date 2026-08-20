@@ -174,7 +174,11 @@
                     <input type="number" id="nuevo-anio" placeholder="2010">
                 </div>
                 <div class="grupo-form" style="flex: 1; min-width: 100px; margin-bottom: 0;">
-                    <label>ID del Director (Opcional)</label>
+                    <label>Duración de la película</label>
+                    <input type="number" id="nuevo-duracion" placeholder="100">
+                </div>
+                <div class="grupo-form" style="flex: 1; min-width: 100px; margin-bottom: 0;">
+                    <label>ID del Director (Valores: 1, 2 o 3)</label>
                     <input type="number" id="nuevo-director-id" placeholder="Ej: 1">
                 </div>
                 <button onclick="ejecutarCrearPelicula()" style="width: auto; padding: 10px 20px; height: 38px;">Guardar Película</button>
@@ -201,6 +205,8 @@
 
     <script>
         const API_URL = "http://localhost:9525/api";
+
+        let paginaActual = 0; // Guarda el estado de la página en la que está el usuario
 
         // Al cargar la página, comprueba si ya había un token y refresca las películas
         window.onload = () => {
@@ -268,19 +274,29 @@
         // FETCH 2: ACCIÓN GET (Obtener recursos públicos)
         // No necesita cabeceras de autorización porque es permitAll()
         // ========================================================
-         async function cargarPeliculas() {
+         async function cargarPeliculas(numeroPagina = 0) {
+
+            paginaActual = numeroPagina; // Actualizamos el estado global
+
             const contenedor = document.getElementById("contenedor-peliculas");
             contenedor.innerHTML = "<p>Cargando catálogo...</p>";
 
             try {
-                const respuesta = await fetch(`${API_URL}/peliculas`);
+                const respuesta = await fetch(`${API_URL}/peliculas?page=${paginaActual}&size=5`);
                 if (!respuesta.ok) throw new Error("No se pudieron cargar las películas");
 
-                const peliculas = await respuesta.json();
+                const datosPaginados = await respuesta.json();
+
+                // Separamos las películas (content) de los metadatos (page)
+                const peliculas = datosPaginados.content;
+                const infoPagina = datosPaginados.page;
+
                 contenedor.innerHTML = "";
 
-                if(peliculas.length === 0) {
+                // Verificamos si el array de películas dentro del content está vacío
+                if(!peliculas || peliculas.length === 0) {
                     contenedor.innerHTML = "<p>No hay películas en la base de datos.</p>";
+                    renderizarControlesPaginacion(infoPagina); // Pintamos los botones de todas formas
                     return;
                 }
 
@@ -308,10 +324,44 @@
                     contenedor.appendChild(card);
                 });
 
+                // Invocamos la función para pintar los botones debajo de las tarjetas
+                renderizarControlesPaginacion(infoPagina);
+
             } catch (error) {
                 contenedor.innerHTML = `<p style="color: var(--danger)">Error: ${error.message}</p>`;
             }
         }
+
+
+
+        /**
+         * Función auxiliar para pintar los botones de navegación
+         */
+        function renderizarControlesPaginacion(page) {
+            // Buscamos si ya existe el contenedor de botones, si no, lo creamos debajo del contenedor de películas
+            let controles = document.getElementById("controles-paginacion");
+            if (!controles) {
+                controles = document.createElement("div");
+                controles.id = "controles-paginacion";
+                controles.style = "display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px; width: 100%;";
+                document.getElementById("contenedor-peliculas").after(controles);
+            }
+
+            // Calculamos si estamos en la primera o última página para deshabilitar botones
+            const esPrimera = page.number === 0;
+            const esUltima = page.number >= page.totalPages - 1;
+
+            controles.innerHTML = `
+                <button onclick="cargarPeliculas(${page.number - 1})" ${esPrimera ? 'disabled style="opacity: 0.5; cursor: not-allowed; width: 10%;"' : 'style="width: 10%;"'}>
+                    ⏮️ Anterior
+                </button>
+                <span style="font-weight: bold;">Página ${page.number + 1} de ${page.totalPages}</span>
+                <button onclick="cargarPeliculas(${page.number + 1})" ${esUltima ? 'disabled style="opacity: 0.5; cursor: not-allowed; width: 10%;"' : 'style="width: 10%;"'}>
+                    Siguiente ⏭️
+                </button>
+            `;
+        }
+
 
 
         // ========================================================
@@ -321,14 +371,18 @@
         async function ejecutarCrearPelicula() {
             const tituloInput = document.getElementById("nuevo-titulo").value;
             const anioInput = document.getElementById("nuevo-anio").value;
+            const duracionInput = document.getElementById("nuevo-duracion").value;
             const directorIdInput = document.getElementById("nuevo-director-id").value;
             const token = localStorage.getItem("jwt_token");
 
             const peliculaDto = {
                 titulo: tituloInput,
-                fechaLanzamiento: parseInt(anioInput)
+                idDirector: parseInt(directorIdInput),
+                fechaLanzamiento: parseInt(anioInput),
+                duracion: parseInt(duracionInput)
             };
 
+            /*
             // Si el usuario introdujo un ID de director, creamos el objeto anidado para Hibernate
             if (directorIdInput.trim() !== "") {
                 peliculaDto.director = {
@@ -337,6 +391,7 @@
             } else {
                 peliculaDto.director = null; // Mantiene la nulabilidad segura
             }
+                */
 
             try {
                 const respuesta = await fetch(`${API_URL}/peliculas`, {

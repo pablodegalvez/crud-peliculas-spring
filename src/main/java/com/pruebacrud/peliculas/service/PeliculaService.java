@@ -8,6 +8,8 @@ import com.pruebacrud.peliculas.mapper.PeliculaMapper;
 import com.pruebacrud.peliculas.model.Pelicula;
 import com.pruebacrud.peliculas.repository.PeliculaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +26,20 @@ public class PeliculaService {
 
 
     @Transactional(readOnly = true)
-    public List<PeliculaResponseDto> listarPeliculas() {
+    public Page<PeliculaResponseDto> listarPeliculas(Pageable pageable) {
         //return peliculaRepository.findAllPeliculasActivasOptimizado();
+        /*
         List<PeliculaResponseDto> listado = peliculaRepository.findAllPeliculasActivasOptimizado().stream().map(pelicula -> peliculaMapper.toResponseDto(pelicula)).collect(Collectors.toList());
         return listado;
+         */
+
+
+        // Enviamos el objeto 'pageable' al repositorio.
+        // SQL resultante automático: "SELECT * FROM peliculas LIMIT 10 OFFSET 0"
+        Page<Pelicula> paginaEntidades = peliculaRepository.findAllPeliculasActivasOptimizado(pageable);
+
+        // Transformamos la página de entidades a una página de DTOs usando MapStruct
+        return paginaEntidades.map(peliculaMapper::toResponseDto);
     }
 
     @Transactional(readOnly = true)
@@ -54,14 +66,16 @@ public class PeliculaService {
         return peliculaMapper.toResponseDto(pelicula);
     }
 
-    public List<PeliculaResponseDto> listarPeliculaPorFecha(Integer fechaExacta) {
-        List<PeliculaResponseDto> listado = peliculaRepository.findAllPeliculasPorFecha(fechaExacta).stream().map(pelicula -> peliculaMapper.toResponseDto(pelicula)).collect(Collectors.toList());
-        return listado;
+    @Transactional(readOnly = true)
+    public Page<PeliculaResponseDto> listarPeliculaPorFecha(Integer fechaExacta, Pageable pageable) {
+        Page<Pelicula> listado = peliculaRepository.findAllPeliculasPorFecha(fechaExacta, pageable);
+        return listado.map(peliculaMapper::toResponseDto);
     }
 
-    public List<PeliculaResponseDto> listarPeliculaPorDuracion (Integer duracion) {
-        List<PeliculaResponseDto> listado = peliculaRepository.findAllDuracionPelicula(duracion).stream().map(pelicula -> peliculaMapper.toResponseDto(pelicula)).collect(Collectors.toList());
-        return listado;
+    @Transactional(readOnly = true)
+    public Page<PeliculaResponseDto> listarPeliculaPorDuracion (Integer duracion, Pageable pageable) {
+        Page<Pelicula> listado = peliculaRepository.findAllDuracionPelicula(duracion, pageable);
+        return listado.map(peliculaMapper::toResponseDto);
     }
 
 

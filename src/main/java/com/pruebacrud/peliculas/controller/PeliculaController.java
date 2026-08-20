@@ -8,6 +8,9 @@ import com.pruebacrud.peliculas.model.Pelicula;
 import com.pruebacrud.peliculas.service.PeliculaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,18 +25,23 @@ public class PeliculaController {
     private final PeliculaService peliculaService;
 
     @GetMapping
-    public List<PeliculaResponseDto> getAll(@RequestParam(required = false) Integer fecha, @RequestParam(required = false) Integer duracionMax) {
+    public ResponseEntity<Page<PeliculaResponseDto>> getAll(
+            @RequestParam(required = false) Integer fecha,
+            @RequestParam(required = false) Integer duracionMax,
+            // @PageableDefault configura los valores por defecto si no vienen en la URL
+            @PageableDefault(page = 0, size = 10, sort = "titulo") Pageable pageable
+    ) {
 
         // Si envían el parámetro 'fecha', filtramos por fecha
         if (fecha != null) {
-            return peliculaService.listarPeliculaPorFecha(fecha);
+            return ResponseEntity.ok(peliculaService.listarPeliculaPorFecha(fecha, pageable));
         }
         // Si envían el parámetro 'duracionMax', filtramos por duración
         if (duracionMax != null) {
-            return peliculaService.listarPeliculaPorDuracion(duracionMax);
+            return ResponseEntity.ok(peliculaService.listarPeliculaPorDuracion(duracionMax, pageable));
         }
 
-        return peliculaService.listarPeliculas();
+        return ResponseEntity.ok(peliculaService.listarPeliculas(pageable));
     }
 
     @GetMapping("/{id}")
