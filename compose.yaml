@@ -1,0 +1,56 @@
+services:
+  # --- SERVICIO 1: LA BASE DE DATOS ---
+  base-datos:
+    image: postgres:15-alpine
+    container_name: contenedor-postgres-peliculas
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    # Usamos EXPOSE por seguridad: solo tu app de Java podrá entrar a la BD de forma interna
+    expose:
+      - "5432"
+    # Volumen nativo para que las películas guardadas no se borren nunca
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # --- SERVICIO 2: TU APLICACIÓN SPRING BOOT ---
+  api-peliculas:
+    build: . # Le dice a Compose que busque el Dockerfile en esta misma carpeta y lo compile
+    container_name: contenedor-app-peliculas
+    ports:
+      - "9525:9525" # Abre el puerto hacia tu Windows para que uses la API o la interfaz
+    environment:
+      # Configuramos Spring Boot usando variables de entorno profesionales
+      # 1. Sobrescribimos la URL para cambiar 'localhost' por el DNS del contenedor de Postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://base-datos:5432/${DB_NAME}
+
+      # Inyectamos el usuario y contraseña dinámicamente
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+
+      # 2. Inyectamos la contraseña que tu properties espera recibir en ${PASSWORD_DB}
+      PASSWORD_DB: ${DB_PASSWORD}
+
+      # 3. Configuramos tus variables de seguridad JWT (Sobrescriben los valores por defecto)
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}       # Cambiamos el tiempo de expiración a 24 horas (en milisegundos)
+    # Importante: Espera a que la base de datos esté lista antes de arrancar la app
+    depends_on:
+      - base-datos
+    restart: always
+
+  # --- SERVICIO 3: EL FRONTEND (Añadir debajo de api-peliculas) ---
+  frontend-peliculas:
+    image: nginx:alpine
+    container_name: contenedor-frontend-peliculas
+    ports:
+      - "80:80" # Mapea el puerto 80 estándar para que entres solo con http://localhost
+    volumes:
+      # Conectamos tu carpeta local 'frontend' con la carpeta donde Nginx busca el index.html
+      - ./frontend:/usr/share/nginx/html
+    restart: unless-stopped
+
+# Declaramos el volumen nativo que usa PostgreSQL
+volumes:
+  datos-postgres:
